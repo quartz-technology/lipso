@@ -1,0 +1,35 @@
+name: "CI"
+
+on:
+  push:
+    branches:
+    - main
+  pull_request:
+    branches:
+    - main
+
+jobs:
+  test-backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+    
+    steps:
+    - name: "Checkout repository"
+      uses: actions/checkout@v4
+    
+    - name: "Use Node.js 22"
+      uses: actions/setup-node@v4
+    
+    - name: "Install Yarn"
+      run: npm install -g yarn
+
+    - name: "Install dependencies"
+      run: yarn install --frozen-lockfile
+
+    - name: "Lint code"
+      run: yarn lint
+
+    - name: "Run tests"
+      run: yarn test
