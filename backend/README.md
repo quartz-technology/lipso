@@ -25,6 +25,11 @@ This will start the backend server in development mode. The server will automati
 
 ### Production
 
+## Contribute
+
+We welcome contributions to the project with ❤️.
+Before you start contributing, please read our [Contributing Guidelines](CONTRIBUTING.md).
+
 ## Authors
 
 Made with ❤️ by the 📡 at [Quartz](https://quartz.technology).
