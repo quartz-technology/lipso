@@ -1,15 +1,31 @@
-import { IsNotEmpty } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  IsArray,
+  IsEnum,
+  IsEthereumAddress,
+  IsNotEmpty,
+  IsNumber,
+} from 'class-validator';
+import { ProtocolName } from '../resolver-registry/implementations/constants';
 
 /**
  * Parameters for the `/positions` endpoint, used to specify:
  *
  * - The Ethereum Address of the owner of the positions.
+ * - The list of networks to fetch positions from.
+ * - The list of protocols to fetch positions from.
  */
 export class ListPositionsDTO {
-  // TODO: Validate that the owner is a valid Ethereum Address.
   @IsNotEmpty()
+  @IsEthereumAddress()
   owner: string;
 
-  // TODO: Add a field to specify the list of chains.
-  // TODO: Add a field to specify the list of protocols.
+  @Type(() => Number)
+  @IsArray()
+  @IsNumber({}, { each: true })
+  chainIDs: number[];
+
+  @IsArray()
+  @IsEnum(ProtocolName, { each: true })
+  protocols: ProtocolName[];
 }
