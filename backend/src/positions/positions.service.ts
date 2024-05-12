@@ -1,33 +1,54 @@
 import { Injectable } from '@nestjs/common';
 import { ListPositionsDTO } from './dto/list-positions.dto';
-import { Position } from './entities/position.entity';
 import { ResolverRegistryService } from './resolver-registry/resolver-registry.service';
 import { getAddress } from 'viem';
-import { ResolverPositionExtra } from './resolver-registry/resolver.entity';
+import {
+  Resolver,
+  ResolverPositionExtra,
+} from './resolver-registry/resolver.entity';
+import { ListPositionsRO, PositionsPerProtocol } from './ro/list-positions.ro';
 
 @Injectable()
 export class PositionsService {
   async findAll(
     query: ListPositionsDTO,
     resolverRegistryService: ResolverRegistryService,
-  ): Promise<Position<ResolverPositionExtra>[]> {
+  ): Promise<ListPositionsRO> {
     const owner = getAddress(query.owner);
-    const store = resolverRegistryService.getStore();
 
-    const positions = (
-      await Promise.all(
-        Array.from(store.values()).map((resolver) => {
-          return Promise.all(
-            resolver.map((r) =>
-              r.findAllPositions<ResolverPositionExtra>(owner),
+    // Quick and dirty filtering of resolvers based on the query.
+    const store = new Map<number, Resolver[]>(
+      [...resolverRegistryService.getStore()]
+        .filter(
+          ([chainID, resolvers]) =>
+            query.chainIDs.includes(chainID) &&
+            resolvers.some((resolver) =>
+              query.protocols.includes(resolver.getProtocolName()),
             ),
-          );
-        }),
-      )
-    )
-      .flat()
-      .flat();
+        )
+        .map(([chain, resolvers]) => [
+          chain,
+          resolvers.filter((resolver) =>
+            query.protocols.includes(resolver.getProtocolName()),
+          ),
+        ]),
+    );
 
-    return positions;
+    const res: ListPositionsRO = {};
+
+    // Note that we don't use Promise.all here because for some reason viem does not work properly in that case.
+    for (const [chainID, resolvers] of store) {
+      const positions: PositionsPerProtocol = {};
+
+      for (const resolver of resolvers) {
+        const resolverPositions =
+          await resolver.findAllPositions<ResolverPositionExtra>(owner);
+        positions[resolver.getProtocolName()] = resolverPositions;
+      }
+
+      res[chainID] = positions;
+    }
+
+    return res;
   }
 }
