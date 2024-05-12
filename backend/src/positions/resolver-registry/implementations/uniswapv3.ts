@@ -11,6 +11,7 @@ import {
   UNISWAP_V3_NONFUNGIBLE_POSITION_MANAGER_ABI,
   UNISWAP_V3_POOL_ABI,
 } from './uniswapv3.abi';
+import { ProtocolName } from './constants';
 
 /**
  * Extra data that the Uniswap V3 resolver can return for a position.
@@ -121,5 +122,9 @@ export class UniswapV3Resolver extends Resolver {
     );
 
     return positions;
+  }
+
+  getProtocolName(): ProtocolName {
+    return ProtocolName.UniswapV3;
   }
 }
