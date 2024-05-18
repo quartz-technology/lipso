@@ -36,18 +36,21 @@ export class PositionsService {
 
     const res: ListPositionsRO = {};
 
-    // Note that we don't use Promise.all here because for some reason viem does not work properly in that case.
-    for (const [chainID, resolvers] of store) {
-      const positions: PositionsPerProtocol = {};
+    await Promise.all(
+      [...store.entries()].map(async ([chainID, resolvers]) => {
+        const positions: PositionsPerProtocol = {};
 
-      for (const resolver of resolvers) {
-        const resolverPositions =
-          await resolver.findAllPositions<ResolverPositionExtra>(owner);
-        positions[resolver.getProtocolName()] = resolverPositions;
-      }
+        await Promise.all(
+          resolvers.map(async (resolver) => {
+            const resolverPositions =
+              await resolver.findAllPositions<ResolverPositionExtra>(owner);
+            positions[resolver.getProtocolName()] = resolverPositions;
+          }),
+        );
 
-      res[chainID] = positions;
-    }
+        res[chainID] = positions;
+      }),
+    );
 
     return res;
   }
